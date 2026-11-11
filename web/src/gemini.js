@@ -8,13 +8,13 @@ const LEVEL = { low: 'LOW', medium: 'MEDIUM', high: 'HIGH' };
 
 let workingModel = null;
 
-export async function askGemini({ apiKey, imageBase64, question, previousAnswer, effort = 'low' }) {
+export async function askGemini({ apiKey, imageBase64, question, previousAnswer, tasks, effort = 'low' }) {
   const ai = new GoogleGenAI({ apiKey });
   const models = workingModel ? [workingModel] : GEMINI_MODELS;
   let lastErr;
   for (const model of models) {
     try {
-      const text = await generate(ai, model, { imageBase64, question, previousAnswer, effort });
+      const text = await generate(ai, model, { imageBase64, question, previousAnswer, tasks, effort });
       workingModel = model;
       if (!text || (!question && /^NOTHING\.?$/i.test(text))) return { text: null, model };
       return { text, model };
@@ -26,7 +26,7 @@ export async function askGemini({ apiKey, imageBase64, question, previousAnswer,
   throw lastErr;
 }
 
-async function generate(ai, model, { imageBase64, question, previousAnswer, effort }, withThinking = true) {
+async function generate(ai, model, { imageBase64, question, previousAnswer, tasks, effort }, withThinking = true) {
   try {
     const res = await ai.models.generateContent({
       model,
@@ -34,7 +34,7 @@ async function generate(ai, model, { imageBase64, question, previousAnswer, effo
         role: 'user',
         parts: [
           { inlineData: { mimeType: 'image/jpeg', data: imageBase64 } },
-          { text: buildUserText({ question, previousAnswer }) },
+          { text: buildUserText({ question, previousAnswer, tasks }) },
         ],
       }],
       config: {
@@ -49,7 +49,7 @@ async function generate(ai, model, { imageBase64, question, previousAnswer, effo
   } catch (err) {
     // Some models don't accept a thinking level — retry once without it.
     if (withThinking && err instanceof ApiError && err.status === 400 && /thinking/i.test(err.message)) {
-      return generate(ai, model, { imageBase64, question, previousAnswer, effort }, false);
+      return generate(ai, model, { imageBase64, question, previousAnswer, tasks, effort }, false);
     }
     throw err;
   }

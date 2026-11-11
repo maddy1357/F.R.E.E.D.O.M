@@ -8,7 +8,7 @@ export const MODEL = 'claude-opus-5-5';
  * Runs in the browser with the user's own key, which never leaves their device except to api.anthropic.com.
  * Returns { text } — text is null when Claude decided there is nothing worth saying.
  */
-export async function askAboutScreen({ apiKey, imageBase64, question, previousAnswer, effort = 'low' }) {
+export async function askAboutScreen({ apiKey, imageBase64, question, previousAnswer, tasks, effort = 'low' }) {
   const client = new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
 
   const response = await client.beta.messages.create({
@@ -24,7 +24,7 @@ export async function askAboutScreen({ apiKey, imageBase64, question, previousAn
         role: 'user',
         content: [
           { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: imageBase64 } },
-          { type: 'text', text: buildUserText({ question, previousAnswer }) },
+          { type: 'text', text: buildUserText({ question, previousAnswer, tasks }) },
         ],
       },
     ],

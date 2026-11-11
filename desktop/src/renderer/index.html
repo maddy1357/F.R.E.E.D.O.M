@@ -11,6 +11,7 @@
     <button id="ball" class="ball" title="F.R.E.E.D.O.M — click to open, drag to move, right-click for menu" aria-label="F.R.E.E.D.O.M">
       <span id="emoji">👀</span>
       <span id="dot" class="dot" hidden></span>
+      <span id="micOn" class="mic-on" hidden>🎤</span>
     </button>
 
     <section id="panel" class="panel" hidden>
@@ -25,6 +26,16 @@
           <button id="closeBtn" class="icon" title="Minimise to ball">✕</button>
         </div>
       </header>
+
+      <nav class="modes">
+        <div class="seg" role="group" aria-label="Mode">
+          <button id="helpBtn" title="Help: watches your screen and suggests the next step or fixes">💡 Help</button>
+          <button id="fullBtn" title="Full Auto: operates the computer to do your tasks">🤖 Full Auto</button>
+        </div>
+        <button id="narrBtn" class="toggle" title="Narrative: speaks answers and results out loud">🔊</button>
+        <button id="micBtn" class="toggle" title="Mic: say tasks and commands">🎤</button>
+      </nav>
+      <div id="heard" class="heard" hidden></div>
 
       <div id="error" class="error" hidden></div>
 
@@ -56,14 +67,42 @@
           <button id="clearKeyBtn">Forget key</button>
           <button id="quitBtn" class="danger">Quit app</button>
         </div>
-        <p class="muted small">Model: <span id="model"></span> · Ask now: <kbd id="hotkey"></kbd></p>
+        <p class="muted small">Model: <span id="model"></span> · Ask now: <kbd id="hotkey"></kbd><br>Voice uses your free Gemini key, even when Claude is the main AI.</p>
       </div>
 
-      <div id="answers" class="answers"></div>
+      <section id="agent" class="agent" hidden>
+        <div class="agent-head">
+          <span>🤖 <strong id="agentTask"></strong></span>
+          <button id="stopBtn" class="danger" title="Stop Full Auto">⏹ Stop</button>
+        </div>
+        <div id="agentQuestion" class="agent-q" hidden>
+          <p id="agentQuestionText"></p>
+          <div class="row">
+            <button id="yesBtn" class="primary">Yes</button>
+            <button id="noBtn">No</button>
+            <button id="doneBtn" title="I did it myself (e.g. typed my password)">Done</button>
+          </div>
+          <p class="muted small">Or type / say your answer.</p>
+        </div>
+        <ol id="agentSteps" class="steps"></ol>
+        <p class="muted small">Stop any time: <kbd id="stopHotkey"></kbd> or say "stop".</p>
+      </section>
+
+      <div class="scroll">
+        <section class="tasks">
+          <div class="tasks-head">
+            <strong>Tasks</strong>
+            <span id="taskHint" class="muted small"></span>
+          </div>
+          <ul id="taskList" class="task-list"></ul>
+        </section>
+        <div id="answers" class="answers"></div>
+      </div>
 
       <form id="askForm" class="ask">
-        <input id="question" placeholder="Ask about your screen…" autocomplete="off" />
-        <button class="primary" type="submit" title="Capture screen and ask">➤</button>
+        <input id="question" placeholder="Ask about your screen, or type a task…" autocomplete="off" />
+        <button id="addTaskBtn" type="button" title="Add as a task">➕</button>
+        <button class="primary" type="submit" title="Look at the screen and ask">➤</button>
       </form>
     </section>
   </div>

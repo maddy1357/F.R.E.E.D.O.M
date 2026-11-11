@@ -7,7 +7,7 @@ const MODEL = 'claude-opus-5-5';
  * Send one screenshot (JPEG, base64) to Claude and get back a short answer.
  * Returns { text } where text is null when Claude decided there is nothing to say.
  */
-async function askAboutScreen({ apiKey, imageBase64, question, previousAnswer, effort = 'low' }) {
+async function askAboutScreen({ apiKey, imageBase64, question, previousAnswer, tasks, effort = 'low' }) {
   const client = new Anthropic({ apiKey: apiKey || undefined });
 
   const response = await client.beta.messages.create({
@@ -23,7 +23,7 @@ async function askAboutScreen({ apiKey, imageBase64, question, previousAnswer, e
         role: 'user',
         content: [
           { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: imageBase64 } },
-          { type: 'text', text: buildUserText({ question, previousAnswer }) },
+          { type: 'text', text: buildUserText({ question, previousAnswer, tasks }) },
         ],
       },
     ],

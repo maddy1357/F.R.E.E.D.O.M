@@ -7,7 +7,7 @@
   "license": "UNLICENSED",
   "scripts": {
     "start": "node scripts/run.js",
-    "check": "node --check src/main.js && node --check src/ai.js && node --check src/gemini.js && node --check src/claude.js && node --check src/preload.js && node --check src/renderer/renderer.js",
+    "check": "node --check src/agent.js && node --check src/voice.js && node --check src/input-win.js && node --check src/main.js && node --check src/ai.js && node --check src/gemini.js && node --check src/claude.js && node --check src/preload.js && node --check src/renderer/renderer.js",
     "selftest": "node scripts/run.js --selftest",
     "dist": "electron-builder"
   },

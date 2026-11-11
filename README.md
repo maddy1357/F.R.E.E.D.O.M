@@ -15,6 +15,19 @@ It works with **Google Gemini for free** (the default; get a free key at https:/
 | 🔑 | Needs an API key |
 | ⚠️ | Something went wrong. Open the ball to see what |
 
+## Modes (desktop app)
+
+| | What it does |
+|---|---|
+| 💡 **Help** | Watches your screen and gives suggestions: the next step for your task, anything you did wrong (wrong date, city, name, amount, a typo), or a better way. |
+| 🤖 **Full Auto** | Does your tasks on the computer for you. It opens websites and apps, clicks, types and scrolls, one step at a time, checking the screen after every step. |
+| 🔊 **Narrative** | Speaks out loud: answers, the questions it needs you to answer, and "Done…" when a task is finished. Works with both modes. |
+| 🎤 **Mic** | Listens all the time. Say a task ("book a flight ticket from Delhi to Bengaluru") and it lands in your **task list**. You can also talk to it: "full auto mode", "help mode", "stop", "yes", "narrate", "what does this error mean?" |
+
+**Full Auto safety.** It always stops and asks you (on screen and out loud) before it pays, confirms a booking, enters card or bank details, types passwords or OTPs, signs in, sends a message, or deletes something. It never types your secrets itself: it asks you to type them, then you press **Done**. Stop it any time with **Ctrl+Shift+X**, the ⏹ Stop button, or by saying "stop". Full Auto works on Windows for now; Help mode works everywhere.
+
+Voice uses Gemini, which understands audio directly, so it needs a free Gemini key even if you use Claude for everything else. Narrative uses the voices built into your computer, so it's free and works offline.
+
 ## How it works
 
 1. Every few seconds it takes a tiny 64×36 snapshot of the screen and compares it with the last one it sent.
@@ -36,6 +49,7 @@ npm install
 npm start
 ```
 
+- **Ctrl+Shift+X** stops Full Auto immediately.
 - **Click** the ball to open the answer panel. **Drag** it anywhere. **Right-click** it for pause, ask now, or quit.
 - **Ctrl+Shift+Space** (Cmd+Shift+Space on a Mac) makes it look at the screen and answer right now.
 - On first run, open ⚙️, pick **Google Gemini — free**, and paste your free Gemini key. Keys are stored encrypted with your operating system's keychain. Alternatively, set `GEMINI_API_KEY` (or `ANTHROPIC_API_KEY` for Claude) before starting.
