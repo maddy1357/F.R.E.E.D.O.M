@@ -1,0 +1,33 @@
+{
+  "name": "freedom-desktop",
+  "productName": "F.R.E.E.D.O.M",
+  "version": "1.0.0",
+  "description": "Floating emoji ball that watches your screen and answers with Claude.",
+  "main": "src/main.js",
+  "license": "MIT",
+  "scripts": {
+    "start": "node scripts/run.js",
+    "check": "node --check src/main.js && node --check src/claude.js && node --check src/preload.js && node --check src/renderer/renderer.js",
+    "selftest": "node scripts/run.js --selftest",
+    "dist": "electron-builder"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.8.0"
+  },
+  "devDependencies": {
+    "electron": "^45.3.0",
+    "electron-builder": "^26.18.0"
+  },
+  "build": {
+    "appId": "com.maddy1357.freedom",
+    "productName": "F.R.E.E.D.O.M",
+    "files": ["src/**/*", "package.json"],
+    "win": { "target": "nsis" },
+    "mac": {
+      "target": "dmg",
+      "category": "public.app-category.productivity",
+      "extendInfo": { "NSScreenCaptureUsageDescription": "F.R.E.E.D.O.M looks at your screen to answer what you are working on." }
+    },
+    "linux": { "target": "AppImage" }
+  }
+}

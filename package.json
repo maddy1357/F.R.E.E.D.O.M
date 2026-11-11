@@ -1,0 +1,13 @@
+{
+  "name": "freedom",
+  "private": true,
+  "description": "F.R.E.E.D.O.M — a floating emoji ball that watches your screen and answers with Claude.",
+  "license": "MIT",
+  "scripts": {
+    "install:all": "npm --prefix desktop install && npm --prefix web install",
+    "desktop": "npm --prefix desktop start",
+    "web": "npm --prefix web run dev",
+    "build:web": "npm --prefix web run build",
+    "dist:desktop": "npm --prefix desktop run dist"
+  }
+}

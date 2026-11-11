@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#4f46e5" />
+  <meta name="description" content="A floating emoji ball that watches your screen and answers with Claude." />
+  <title>F.R.E.E.D.O.M</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <link rel="manifest" href="manifest.webmanifest" />
+</head>
+<body>
+  <main class="page">
+    <h1><span class="logo">👀</span> F.R.E.E.D.O.M</h1>
+    <p class="lead">A floating emoji ball that keeps an eye on your screen and answers whatever you are looking at: questions, errors, code, forms.</p>
+
+    <ol class="steps">
+      <li><strong>Tap the ball</strong> and paste your Anthropic API key (stored only in this browser).</li>
+      <li>Choose what it watches: <strong>📺 Screen</strong> (share your entire screen), <strong>📷 Camera</strong> (point your phone at any screen or page), or <strong>🖼️ Photo</strong> (a screenshot).</li>
+      <li>Leave it running. When something needs an answer, the ball turns 💡.</li>
+    </ol>
+
+    <div class="cards">
+      <section>
+        <h2>💻 Laptop / desktop browser</h2>
+        <p>Use 📺 Screen and pick <em>Entire screen</em>. In Chrome or Edge, press <strong>⧉ Pop out</strong> to float the ball above every other app.</p>
+      </section>
+      <section>
+        <h2>📱 Phone / tablet</h2>
+        <p>Phone browsers can't read other apps' screens, so use 📷 Camera or 🖼️ Photo. Add this page to your home screen to open it like an app.</p>
+      </section>
+      <section>
+        <h2>🖥️ Desktop app</h2>
+        <p>The F.R.E.E.D.O.M desktop app (Windows, macOS, Linux) floats over every app, watches all the time, and answers on <kbd>Ctrl+Shift+Space</kbd>. See <a href="https://github.com/maddy1357/F.R.E.E.D.O.M#desktop-app" target="_blank" rel="noopener">the README</a>.</p>
+      </section>
+    </div>
+
+    <p class="fine">Every look sends one picture of your screen to the Claude API using your key. Pause the ball any time with ⏸. Nothing is stored on any server by this app.</p>
+  </main>
+
+  <div id="widget" class="widget">
+    <button id="ball" class="ball" aria-label="F.R.E.E.D.O.M" title="Tap to open · drag to move">
+      <span id="emoji">🔑</span>
+      <span id="dot" class="dot" hidden></span>
+    </button>
+
+    <section id="panel" class="panel" hidden>
+      <header>
+        <div class="title">
+          <strong>F.R.E.E.D.O.M</strong>
+          <span id="statusText" class="muted">ready</span>
+        </div>
+        <div class="actions">
+          <button id="autoBtn" class="icon" title="Pause / resume watching">⏸</button>
+          <button id="settingsBtn" class="icon" title="Settings">⚙️</button>
+          <button id="closeBtn" class="icon" title="Minimise to ball">✕</button>
+        </div>
+      </header>
+
+      <div id="error" class="error" hidden></div>
+
+      <div id="settings" class="settings" hidden>
+        <label>Anthropic API key
+          <input id="apiKey" type="password" placeholder="sk-ant-…" autocomplete="off" spellcheck="false" />
+        </label>
+        <p class="muted small">Saved only in this browser and sent only to api.anthropic.com. Get a key at console.anthropic.com.</p>
+        <div class="row">
+          <label>Look every (s)<input id="intervalSec" type="number" min="2" max="60" /></label>
+          <label>Min gap (s)<input id="minGapSec" type="number" min="3" max="600" /></label>
+        </div>
+        <label>Thinking effort
+          <select id="effort">
+            <option value="low">Low — fastest</option>
+            <option value="medium">Medium</option>
+            <option value="high">High — smartest, slower</option>
+          </select>
+        </label>
+        <div class="row">
+          <button id="saveBtn" class="primary">Save</button>
+          <button id="clearKeyBtn">Forget key</button>
+        </div>
+        <p class="muted small">Model: <span id="model"></span></p>
+      </div>
+
+      <div class="sources">
+        <button id="screenBtn" title="Share your entire screen">📺 Screen</button>
+        <button id="cameraBtn" title="Use the camera">📷 Camera</button>
+        <button id="photoBtn" title="Pick or take a picture">🖼️ Photo</button>
+        <button id="pipBtn" title="Float above all apps (Chrome / Edge)" hidden>⧉ Pop out</button>
+        <input id="photoInput" type="file" accept="image/*" hidden />
+      </div>
+      <video id="preview" class="preview" muted playsinline hidden></video>
+
+      <div id="answers" class="answers"></div>
+
+      <form id="askForm" class="ask">
+        <input id="question" placeholder="Ask about your screen…" autocomplete="off" />
+        <button class="primary" type="submit" title="Look now and ask">➤</button>
+      </form>
+    </section>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

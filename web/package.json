@@ -1,0 +1,19 @@
+{
+  "name": "freedom-web",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "F.R.E.E.D.O.M in the browser: a floating emoji ball that watches your screen (or camera) and answers with Claude.",
+  "license": "MIT",
+  "scripts": {
+    "dev": "vite --host",
+    "build": "vite build",
+    "preview": "vite preview --host"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.8.0"
+  },
+  "devDependencies": {
+    "vite": "^8.3.8"
+  }
+}

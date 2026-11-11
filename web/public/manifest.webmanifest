@@ -1,0 +1,13 @@
+{
+  "name": "F.R.E.E.D.O.M",
+  "short_name": "FREEDOM",
+  "description": "A floating emoji ball that watches your screen and answers with Claude.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0f1013",
+  "theme_color": "#4f46e5",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

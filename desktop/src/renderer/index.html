@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self'; script-src 'self'; img-src 'self' data:" />
+  <title>F.R.E.E.D.O.M</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="root">
+    <button id="ball" class="ball" title="F.R.E.E.D.O.M — click to open, drag to move, right-click for menu" aria-label="F.R.E.E.D.O.M">
+      <span id="emoji">👀</span>
+      <span id="dot" class="dot" hidden></span>
+    </button>
+
+    <section id="panel" class="panel" hidden>
+      <header>
+        <div class="title">
+          <strong>F.R.E.E.D.O.M</strong>
+          <span id="statusText" class="muted">watching</span>
+        </div>
+        <div class="actions">
+          <button id="autoBtn" class="icon" title="Pause / resume watching">⏸</button>
+          <button id="settingsBtn" class="icon" title="Settings">⚙️</button>
+          <button id="closeBtn" class="icon" title="Minimise to ball">✕</button>
+        </div>
+      </header>
+
+      <div id="error" class="error" hidden></div>
+
+      <div id="settings" class="settings" hidden>
+        <label>Anthropic API key
+          <input id="apiKey" type="password" placeholder="sk-ant-…" autocomplete="off" spellcheck="false" />
+        </label>
+        <p class="muted small">Stored encrypted on this device. Leave empty to use the <code>ANTHROPIC_API_KEY</code> environment variable.</p>
+        <div class="row">
+          <label>Look every (s)<input id="intervalSec" type="number" min="2" max="60" /></label>
+          <label>Min gap (s)<input id="minGapSec" type="number" min="3" max="600" /></label>
+        </div>
+        <label>Thinking effort
+          <select id="effort">
+            <option value="low">Low — fastest</option>
+            <option value="medium">Medium</option>
+            <option value="high">High — smartest, slower</option>
+          </select>
+        </label>
+        <div class="row">
+          <button id="saveBtn" class="primary">Save</button>
+          <button id="clearKeyBtn">Forget key</button>
+          <button id="quitBtn" class="danger">Quit app</button>
+        </div>
+        <p class="muted small">Model: <span id="model"></span> · Ask now: <kbd id="hotkey"></kbd></p>
+      </div>
+
+      <div id="answers" class="answers"></div>
+
+      <form id="askForm" class="ask">
+        <input id="question" placeholder="Ask about your screen…" autocomplete="off" />
+        <button class="primary" type="submit" title="Capture screen and ask">➤</button>
+      </form>
+    </section>
+  </div>
+  <script src="renderer.js"></script>
+</body>
+</html>
