@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "description": "Floating emoji ball that watches your screen and answers with Claude.",
   "main": "src/main.js",
-  "license": "MIT",
+  "license": "UNLICENSED",
   "scripts": {
     "start": "node scripts/run.js",
     "check": "node --check src/main.js && node --check src/ai.js && node --check src/gemini.js && node --check src/claude.js && node --check src/preload.js && node --check src/renderer/renderer.js",
