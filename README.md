@@ -116,4 +116,4 @@ web/                  Browser / phone version (Vite), deployed to GitHub Pages
 
 ## License
 
-MIT
+Copyright (c) 2026 mahimj. All rights reserved. Proprietary; see [LICENSE](LICENSE).
