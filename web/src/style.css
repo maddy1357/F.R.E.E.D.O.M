@@ -107,6 +107,7 @@ header { display: flex; align-items: center; justify-content: space-between; gap
 .panel button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
 .panel button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
 
+.note { padding: 6px 8px; border-radius: 8px; background: rgba(234, 179, 8, 0.14); color: var(--fg); }
 .error { margin: 10px 12px 0; padding: 8px 10px; border-radius: 8px; background: rgba(220, 38, 38, 0.12); color: var(--danger); }
 
 .settings { display: flex; flex-direction: column; gap: 8px; padding: 12px; border-bottom: 1px solid var(--line); }

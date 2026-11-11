@@ -1,5 +1,5 @@
 import './style.css';
-import { askAboutScreen, describeError, MODEL } from './claude.js';
+import { askAboutScreen, describeError, PROVIDERS } from './ai.js';
 import { renderMarkdown, escapeHtml, timeAgo } from './markdown.js';
 
 // Cache every element once: after "Pop out" the widget lives in another document,
@@ -27,16 +27,19 @@ const store = {
   set(k, v) { try { localStorage.setItem('freedom.' + k, JSON.stringify(v)); } catch { /* private mode */ } },
 };
 const settings = {
-  apiKey: store.get('apiKey', ''),
+  provider: store.get('provider', 'gemini'),
+  keys: store.get('keys', { gemini: '', claude: store.get('apiKey', '') }), // v1.0 kept one Claude key in 'apiKey'
   auto: store.get('auto', true),
   intervalSec: store.get('intervalSec', 4),
   minGapSec: store.get('minGapSec', 12),
   effort: store.get('effort', 'low'),
 };
 const saveSettings = () => Object.entries(settings).forEach(([k, v]) => store.set(k, v));
+if (!PROVIDERS[settings.provider]) settings.provider = 'gemini';
+const currentKey = () => settings.keys[settings.provider] || '';
 
 const state = {
-  status: settings.apiKey ? 'idle' : 'nokey',
+  status: currentKey() ? 'idle' : 'nokey',
   expanded: false,
   answers: [],
   error: null,
@@ -101,7 +104,7 @@ async function startSource(kind) {
   state.source = kind;
   lastSentSig = null;
   prevTickSig = null;
-  if (!settings.apiKey) setStatus('nokey');
+  if (!currentKey()) setStatus('nokey');
   else setStatus(settings.auto ? 'watching' : 'paused', { error: null });
   scheduleTick(500);
 }
@@ -111,7 +114,7 @@ function stopSource() {
   stream = null;
   video.srcObject = null;
   state.source = null;
-  if (['watching', 'paused'].includes(state.status)) setStatus(settings.apiKey ? 'idle' : 'nokey');
+  if (['watching', 'paused'].includes(state.status)) setStatus(currentKey() ? 'idle' : 'nokey');
   else render();
 }
 
@@ -125,20 +128,21 @@ let tickTimer = null;
 
 async function ask({ imageBase64, question = null }) {
   if (busy) return;
-  if (!settings.apiKey) { setStatus('nokey'); expand(true); return; }
+  if (!currentKey()) { setStatus('nokey'); expand(true); return; }
   busy = true;
   setStatus('thinking', { error: null });
   lastCallAt = Date.now();
   try {
     const result = await askAboutScreen({
-      apiKey: settings.apiKey,
+      provider: settings.provider,
+      apiKey: currentKey(),
       imageBase64,
       question,
       previousAnswer: state.answers[0]?.text,
       effort: settings.effort,
     });
     if (result.text) {
-      state.answers.unshift({ text: result.text, at: Date.now(), question });
+      state.answers.unshift({ text: result.text, at: Date.now(), question, model: result.model || PROVIDERS[settings.provider].model });
       state.answers = state.answers.slice(0, 20);
       state.unread = !state.expanded;
       rebaseline = true; // showing the answer changes the screen; don't treat that as new content
@@ -168,7 +172,7 @@ function scheduleTick(ms) {
 
 function tick() {
   try {
-    if (!stream || !settings.auto || busy || !settings.apiKey || !video.videoWidth) return;
+    if (!stream || !settings.auto || busy || !currentKey() || !video.videoWidth) return;
     const sig = signature();
     if (rebaseline) { lastSentSig = sig; prevTickSig = sig; rebaseline = false; return; }
     const changed = diff(sig, lastSentSig) > CHANGE_THRESHOLD;
@@ -242,8 +246,19 @@ function expand(open) {
   render();
 }
 
+function fillProvider(provider) {
+  const info = PROVIDERS[provider];
+  $('provider').value = provider;
+  $('keyLabel').textContent = provider === 'gemini' ? 'Gemini API key (free)' : 'Anthropic API key';
+  $('apiKey').placeholder = info.keyHint;
+  $('apiKey').value = settings.keys[provider] || '';
+  $('keyLink').href = info.keyUrl;
+  $('keyLink').textContent = provider === 'gemini' ? 'Get a free key at aistudio.google.com' : 'Get a key at console.anthropic.com';
+  $('freeNote').hidden = provider !== 'gemini';
+}
+
 function fillSettings() {
-  $('apiKey').value = settings.apiKey;
+  fillProvider(settings.provider);
   $('intervalSec').value = settings.intervalSec;
   $('minGapSec').value = settings.minGapSec;
   $('effort').value = settings.effort;
@@ -267,8 +282,8 @@ function render() {
   $('closeBtn').hidden = Boolean(s.pip);
   $('error').hidden = !s.error;
   $('error').textContent = s.error || '';
-  $('settings').hidden = !(s.settingsOpen || !settings.apiKey);
-  $('model').textContent = MODEL;
+  $('settings').hidden = !(s.settingsOpen || !currentKey());
+  $('model').textContent = PROVIDERS[settings.provider].model;
 
   $('screenBtn').classList.toggle('on', s.source === 'screen');
   $('cameraBtn').classList.toggle('on', s.source === 'camera');
@@ -280,7 +295,7 @@ function render() {
   const box = $('answers');
   if (!s.answers.length) {
     let msg;
-    if (!settings.apiKey) msg = '<span class="big">🔑</span>Paste your Anthropic API key above to start.';
+    if (!currentKey()) msg = `<span class="big">🔑</span>${settings.provider === 'gemini' ? 'Paste a free Gemini API key above to start.' : 'Paste your Anthropic API key above to start.'}`;
     else if (!s.source) msg = '<span class="big">🙂</span>Pick <strong>📺 Screen</strong> to watch your whole screen, <strong>📷 Camera</strong> to watch through your phone, or <strong>🖼️ Photo</strong> for a single picture.';
     else if (s.status === 'error') msg = '<span class="big">⚠️</span>Fix the problem above, then I will keep watching.';
     else msg = `<span class="big">${EMOJI[s.status]}</span>${settings.auto ? 'Watching. When something needs an answer, it shows up here.' : 'Paused. Ask a question below, or press ▶ to keep watching.'}`;
@@ -289,7 +304,7 @@ function render() {
     box.innerHTML = s.answers.map((a, i) => `
       <article class="answer">
         <div class="meta">
-          <span>${a.question ? '❓ ' + escapeHtml(a.question) : '👀 from your screen'} · ${timeAgo(a.at)}</span>
+          <span title="${escapeHtml(a.model || '')}">${a.question ? '❓ ' + escapeHtml(a.question) : '👀 from your screen'} · ${timeAgo(a.at)}</span>
           <button class="copy" data-i="${i}">Copy</button>
         </div>
         <div class="body">${renderMarkdown(a.text)}</div>
@@ -343,16 +358,24 @@ $('autoBtn').onclick = () => {
 };
 $('settingsBtn').onclick = () => { state.settingsOpen = !state.settingsOpen; fillSettings(); render(); };
 $('saveBtn').onclick = () => {
-  settings.apiKey = $('apiKey').value.trim();
+  settings.provider = $('provider').value;
+  settings.keys = { ...settings.keys, [settings.provider]: $('apiKey').value.trim() };
   settings.intervalSec = Math.min(60, Math.max(2, +$('intervalSec').value || 4));
   settings.minGapSec = Math.min(600, Math.max(3, +$('minGapSec').value || 12));
   settings.effort = $('effort').value;
   saveSettings();
   state.settingsOpen = false;
-  const status = !settings.apiKey ? 'nokey' : state.source ? (settings.auto ? 'watching' : 'paused') : 'idle';
+  const status = !currentKey() ? 'nokey' : state.source ? (settings.auto ? 'watching' : 'paused') : 'idle';
   setStatus(status, { error: null });
 };
-$('clearKeyBtn').onclick = () => { settings.apiKey = ''; saveSettings(); $('apiKey').value = ''; setStatus('nokey'); };
+$('clearKeyBtn').onclick = () => {
+  settings.provider = $('provider').value;
+  settings.keys = { ...settings.keys, [settings.provider]: '' };
+  saveSettings();
+  $('apiKey').value = '';
+  setStatus('nokey');
+};
+$('provider').onchange = () => fillProvider($('provider').value);
 $('screenBtn').onclick = () => (state.source === 'screen' ? stopSource() : startSource('screen'));
 $('cameraBtn').onclick = () => (state.source === 'camera' ? stopSource() : startSource('camera'));
 $('photoBtn').onclick = () => $('photoInput').click();

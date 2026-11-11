@@ -29,10 +29,17 @@
       <div id="error" class="error" hidden></div>
 
       <div id="settings" class="settings" hidden>
-        <label>Anthropic API key
-          <input id="apiKey" type="password" placeholder="sk-ant-…" autocomplete="off" spellcheck="false" />
+        <label>AI provider
+          <select id="provider">
+            <option value="gemini">Google Gemini — free</option>
+            <option value="claude">Anthropic Claude — paid</option>
+          </select>
         </label>
-        <p class="muted small">Stored encrypted on this device. Leave empty to use the <code>ANTHROPIC_API_KEY</code> environment variable.</p>
+        <label><span id="keyLabel">API key</span>
+          <input id="apiKey" type="password" placeholder="" autocomplete="off" spellcheck="false" />
+        </label>
+        <p class="muted small"><a id="keyLink" href="#" target="_blank">Get a key</a> · stored encrypted on this device.</p>
+        <p id="freeNote" class="note small">Free tier: Google may use the screenshots you send to improve its products. Pause (⏸) before showing anything private.</p>
         <div class="row">
           <label>Look every (s)<input id="intervalSec" type="number" min="2" max="60" /></label>
           <label>Min gap (s)<input id="minGapSec" type="number" min="3" max="600" /></label>

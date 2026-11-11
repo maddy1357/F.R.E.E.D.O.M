@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#4f46e5" />
-  <meta name="description" content="A floating emoji ball that watches your screen and answers with Claude." />
+  <meta name="description" content="A floating emoji ball that watches your screen and answers with AI (free Gemini or Claude)." />
   <title>F.R.E.E.D.O.M</title>
   <link rel="icon" href="icon.svg" type="image/svg+xml" />
   <link rel="manifest" href="manifest.webmanifest" />
@@ -15,7 +15,7 @@
     <p class="lead">A floating emoji ball that keeps an eye on your screen and answers whatever you are looking at: questions, errors, code, forms.</p>
 
     <ol class="steps">
-      <li><strong>Tap the ball</strong> and paste your Anthropic API key (stored only in this browser).</li>
+      <li><strong>Tap the ball</strong> and paste a <strong>free</strong> Google Gemini API key from <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com</a> (or an Anthropic Claude key). It stays in this browser.</li>
       <li>Choose what it watches: <strong>📺 Screen</strong> (share your entire screen), <strong>📷 Camera</strong> (point your phone at any screen or page), or <strong>🖼️ Photo</strong> (a screenshot).</li>
       <li>Leave it running. When something needs an answer, the ball turns 💡.</li>
     </ol>
@@ -35,7 +35,7 @@
       </section>
     </div>
 
-    <p class="fine">Every look sends one picture of your screen to the Claude API using your key. Pause the ball any time with ⏸. Nothing is stored on any server by this app.</p>
+    <p class="fine">Every look sends one picture of your screen to the AI you picked, using your key. On Gemini's free tier, Google may use what you send to improve its products. Pause the ball any time with ⏸. Nothing is stored on any server by this app.</p>
   </main>
 
   <div id="widget" class="widget">
@@ -60,10 +60,17 @@
       <div id="error" class="error" hidden></div>
 
       <div id="settings" class="settings" hidden>
-        <label>Anthropic API key
-          <input id="apiKey" type="password" placeholder="sk-ant-…" autocomplete="off" spellcheck="false" />
+        <label>AI provider
+          <select id="provider">
+            <option value="gemini">Google Gemini — free</option>
+            <option value="claude">Anthropic Claude — paid</option>
+          </select>
         </label>
-        <p class="muted small">Saved only in this browser and sent only to api.anthropic.com. Get a key at console.anthropic.com.</p>
+        <label><span id="keyLabel">API key</span>
+          <input id="apiKey" type="password" placeholder="" autocomplete="off" spellcheck="false" />
+        </label>
+        <p class="muted small"><a id="keyLink" href="#" target="_blank" rel="noopener">Get a key</a> · saved only in this browser.</p>
+        <p id="freeNote" class="note small">Free tier: Google may use the screenshots you send to improve its products. Pause (⏸) before showing anything private.</p>
         <div class="row">
           <label>Look every (s)<input id="intervalSec" type="number" min="2" max="60" /></label>
           <label>Min gap (s)<input id="minGapSec" type="number" min="3" max="600" /></label>

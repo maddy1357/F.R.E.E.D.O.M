@@ -86,12 +86,12 @@ function render() {
       ? `<div class="empty"><span class="big">${EMOJI[state.status] || '👀'}</span>
            ${state.settings.auto ? 'Watching your screen. When something needs an answer, it shows up here.' : 'Paused. Ask a question below, or press ▶ to keep watching.'}
            <br><br>Shortcut: <kbd>${escapeHtml(state.hotkey)}</kbd></div>`
-      : '<div class="empty"><span class="big">🔑</span>Paste your Anthropic API key above to start.</div>';
+      : `<div class="empty"><span class="big">🔑</span>${state.settings.provider === 'gemini' ? 'Paste a free Gemini API key above to start.' : 'Paste your Anthropic API key above to start.'}</div>`;
   } else {
     box.innerHTML = state.answers.map((a, i) => `
       <article class="answer">
         <div class="meta">
-          <span>${a.question ? '❓ ' + escapeHtml(a.question) : '👀 from your screen'} · ${timeAgo(a.at)}</span>
+          <span title="${escapeHtml(a.model || '')}">${a.question ? '❓ ' + escapeHtml(a.question) : '👀 from your screen'} · ${timeAgo(a.at)}</span>
           <button class="copy" data-i="${i}">Copy</button>
         </div>
         <div class="body">${renderMarkdown(a.text)}</div>
@@ -99,9 +99,20 @@ function render() {
   }
 }
 
+function fillProvider(provider) {
+  const info = state.providers[provider];
+  $('provider').value = provider;
+  $('keyLabel').textContent = provider === 'gemini' ? 'Gemini API key (free)' : 'Anthropic API key';
+  $('apiKey').placeholder = info.keyHint;
+  $('apiKey').value = state.settings.keys[provider] || '';
+  $('keyLink').href = info.keyUrl;
+  $('keyLink').textContent = provider === 'gemini' ? 'Get a free key at aistudio.google.com' : 'Get a key at console.anthropic.com';
+  $('freeNote').hidden = provider !== 'gemini';
+}
+
 function fillSettings() {
   if (!state) return;
-  $('apiKey').value = state.settings.apiKey || '';
+  fillProvider(state.settings.provider);
   $('intervalSec').value = state.settings.intervalSec;
   $('minGapSec').value = state.settings.minGapSec;
   $('effort').value = state.settings.effort;
@@ -139,6 +150,7 @@ $('autoBtn').onclick = () => freedom.setAuto(!state.settings.auto);
 $('settingsBtn').onclick = () => { settingsOpen = !settingsOpen; fillSettings(); render(); };
 $('saveBtn').onclick = () => {
   freedom.saveSettings({
+    provider: $('provider').value,
     apiKey: $('apiKey').value,
     intervalSec: $('intervalSec').value,
     minGapSec: $('minGapSec').value,
@@ -146,7 +158,8 @@ $('saveBtn').onclick = () => {
   });
   settingsOpen = false;
 };
-$('clearKeyBtn').onclick = () => { freedom.saveSettings({ clearKey: true }); $('apiKey').value = ''; };
+$('clearKeyBtn').onclick = () => { freedom.saveSettings({ provider: $('provider').value, clearKey: true }); $('apiKey').value = ''; };
+$('provider').onchange = () => fillProvider($('provider').value);
 $('quitBtn').onclick = () => freedom.quit();
 $('askForm').onsubmit = (e) => {
   e.preventDefault();

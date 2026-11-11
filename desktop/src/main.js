@@ -3,13 +3,13 @@ const {
 } = require('electron');
 const fs = require('fs');
 const path = require('path');
-const { askAboutScreen, describeError, MODEL } = require('./claude');
+const { askAboutScreen, describeError, PROVIDERS } = require('./ai');
 
 // ---------- constants ----------
 const BALL_WIN = 76;                 // collapsed window: just the ball (+ shadow room)
 const PANEL_W = 380;
 const PANEL_H = 520;
-const CAPTURE_MAX_EDGE = 1920;       // screenshot long edge sent to Claude
+const CAPTURE_MAX_EDGE = 1920;       // screenshot long edge sent to the AI
 const SIG_W = 64;                    // tiny thumbnail used for change detection
 const SIG_H = 36;
 const CHANGE_THRESHOLD = 0.02;       // mean pixel change (0..1) that counts as "screen changed"
@@ -17,44 +17,56 @@ const STABLE_THRESHOLD = 0.01;       // screen must settle below this between tw
 const HOTKEY = 'CommandOrControl+Shift+Space';
 
 const DEFAULTS = {
-  apiKey: '',
+  provider: 'gemini',  // gemini (free tier) | claude (paid)
+  keys: { gemini: '', claude: '' },
   auto: true,          // continuously watch the screen
   intervalSec: 4,      // how often to look for changes
-  minGapSec: 12,       // minimum seconds between two automatic Claude calls
+  minGapSec: 12,       // minimum seconds between two automatic AI calls
   effort: 'low',       // low | medium | high — higher is smarter but slower
 };
 
-// ---------- settings (API key encrypted with the OS keychain when available) ----------
+// ---------- settings (API keys encrypted with the OS keychain when available) ----------
 const configPath = () => path.join(app.getPath('userData'), 'config.json');
+const canEncrypt = () => safeStorage.isEncryptionAvailable();
+const decrypt = (v) => (v ? safeStorage.decryptString(Buffer.from(v, 'base64')) : '');
+const encrypt = (v) => safeStorage.encryptString(v).toString('base64');
 
 function loadSettings() {
   try {
     const raw = JSON.parse(fs.readFileSync(configPath(), 'utf8'));
-    let apiKey = '';
-    if (raw.apiKeyEnc && safeStorage.isEncryptionAvailable()) {
-      apiKey = safeStorage.decryptString(Buffer.from(raw.apiKeyEnc, 'base64'));
-    } else if (raw.apiKey) {
-      apiKey = raw.apiKey;
+    const keys = { gemini: '', claude: '' };
+    for (const p of Object.keys(keys)) {
+      if (raw.keysEnc?.[p] && canEncrypt()) keys[p] = decrypt(raw.keysEnc[p]);
+      else if (raw.keys?.[p]) keys[p] = raw.keys[p];
     }
-    return { ...DEFAULTS, ...raw, apiKey, apiKeyEnc: undefined };
+    // v1.0 stored a single Claude key
+    if (!keys.claude && raw.apiKeyEnc && canEncrypt()) keys.claude = decrypt(raw.apiKeyEnc);
+    else if (!keys.claude && raw.apiKey) keys.claude = raw.apiKey;
+    const out = { ...DEFAULTS, ...raw, keys };
+    delete out.keysEnc; delete out.apiKeyEnc; delete out.apiKey;
+    if (!PROVIDERS[out.provider]) out.provider = 'gemini';
+    return out;
   } catch {
-    return { ...DEFAULTS };
+    return { ...DEFAULTS, keys: { ...DEFAULTS.keys } };
   }
 }
 
 function saveSettings(s) {
   const out = { ...s };
-  delete out.apiKey;
-  if (s.apiKey) {
-    if (safeStorage.isEncryptionAvailable()) out.apiKeyEnc = safeStorage.encryptString(s.apiKey).toString('base64');
-    else out.apiKey = s.apiKey;
+  delete out.keys;
+  if (canEncrypt()) {
+    out.keysEnc = Object.fromEntries(Object.entries(s.keys).filter(([, v]) => v).map(([p, v]) => [p, encrypt(v)]));
+  } else {
+    out.keys = s.keys;
   }
   fs.mkdirSync(path.dirname(configPath()), { recursive: true });
   fs.writeFileSync(configPath(), JSON.stringify(out, null, 2));
 }
 
 let settings;
-const effectiveKey = () => settings.apiKey || process.env.ANTHROPIC_API_KEY || '';
+const envKey = (p) => PROVIDERS[p].env.map((n) => process.env[n]).find(Boolean) || '';
+const effectiveKey = () => settings.keys[settings.provider] || envKey(settings.provider);
+const mask = (k) => (k ? '••••' + k.slice(-4) : '');
 
 // ---------- state shared with the ball UI ----------
 const state = {
@@ -62,7 +74,7 @@ const state = {
   expanded: false,
   alignRight: false,
   alignBottom: false,
-  answers: [],         // newest first: { text, at, question }
+  answers: [],         // newest first: { text, at, question, model }
   error: null,
   unread: false,
 };
@@ -71,11 +83,13 @@ let win;
 let ballPos;           // top-left of the ball window when collapsed
 
 function publicState() {
+  const { keys, ...rest } = settings;
   return {
     ...state,
-    settings: { ...settings, apiKey: settings.apiKey ? '••••' + settings.apiKey.slice(-4) : '' },
+    settings: { ...rest, keys: { gemini: mask(keys.gemini), claude: mask(keys.claude) } },
     hasKey: Boolean(effectiveKey()),
-    model: MODEL,
+    providers: PROVIDERS,
+    model: PROVIDERS[settings.provider].model,
     hotkey: HOTKEY.replace('CommandOrControl', process.platform === 'darwin' ? 'Cmd' : 'Ctrl'),
   };
 }
@@ -237,6 +251,7 @@ async function ask({ question = null, force = false } = {}) {
     prevTickSig = lastSentSig;
     lastCallAt = Date.now();
     const result = await askAboutScreen({
+      provider: settings.provider,
       apiKey: effectiveKey(),
       imageBase64: image.toJPEG(80).toString('base64'),
       question: question || (force ? 'Look at my screen and tell me the most useful thing right now.' : null),
@@ -244,7 +259,7 @@ async function ask({ question = null, force = false } = {}) {
       effort: settings.effort,
     });
     if (result.text) {
-      state.answers.unshift({ text: result.text, at: Date.now(), question });
+      state.answers.unshift({ text: result.text, at: Date.now(), question, model: result.model || PROVIDERS[settings.provider].model });
       state.answers = state.answers.slice(0, 20);
       state.unread = !state.expanded;
       setStatus('answer');
@@ -308,9 +323,11 @@ ipcMain.on('ask', (_e, question) => ask({ question: (question || '').trim() || n
 ipcMain.on('clear', () => { state.answers = []; setStatus(settings.auto ? 'watching' : 'idle'); });
 ipcMain.on('quit', () => app.quit());
 ipcMain.on('save-settings', (_e, incoming) => {
-  const next = { ...settings };
-  if (typeof incoming.apiKey === 'string' && incoming.apiKey.trim() && !incoming.apiKey.startsWith('••••')) next.apiKey = incoming.apiKey.trim();
-  if (incoming.clearKey) next.apiKey = '';
+  const next = { ...settings, keys: { ...settings.keys } };
+  if (PROVIDERS[incoming.provider]) next.provider = incoming.provider;
+  const key = typeof incoming.apiKey === 'string' ? incoming.apiKey.trim() : '';
+  if (key && !key.startsWith('••••')) next.keys[next.provider] = key;
+  if (incoming.clearKey) next.keys[next.provider] = '';
   if (Number.isFinite(+incoming.intervalSec)) next.intervalSec = Math.min(60, Math.max(2, +incoming.intervalSec));
   if (Number.isFinite(+incoming.minGapSec)) next.minGapSec = Math.min(600, Math.max(3, +incoming.minGapSec));
   if (['low', 'medium', 'high'].includes(incoming.effort)) next.effort = incoming.effort;

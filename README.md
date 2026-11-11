@@ -1,6 +1,8 @@
 # 👀 F.R.E.E.D.O.M
 
-A floating emoji ball, like Assistive Touch, that sits on top of your screen, keeps watching what you're doing, and answers what you're looking at: a question, an error, a bug, or a form. It uses Claude's vision model.
+A floating emoji ball, like Assistive Touch, that sits on top of your screen, keeps watching what you're doing, and answers what you're looking at: a question, an error, a bug, or a form.
+
+It works with **Google Gemini for free** (the default; get a free key at https://aistudio.google.com/apikey, no card needed), or with Anthropic Claude if you have a paid key.
 
 **Try it in your browser:** https://maddy1357.github.io/F.R.E.E.D.O.M/
 
@@ -10,14 +12,14 @@ A floating emoji ball, like Assistive Touch, that sits on top of your screen, ke
 | 🤔 | Thinking (sent a picture of your screen to Claude) |
 | 💡 + green dot | A new answer is ready. Tap the ball to read it |
 | 😴 | Paused |
-| 🔑 | Needs an Anthropic API key |
+| 🔑 | Needs an API key |
 | ⚠️ | Something went wrong. Open the ball to see what |
 
 ## How it works
 
 1. Every few seconds it takes a tiny 64×36 snapshot of the screen and compares it with the last one it sent.
-2. When the screen has **changed** and then **stopped changing** (you finished scrolling or typing), it sends one full screenshot to Claude (`claude-opus-5-5`).
-3. Claude answers the most useful thing on screen, or replies `NOTHING` when there is nothing worth saying. In that case the ball stays quiet.
+2. When the screen has **changed** and then **stopped changing** (you finished scrolling or typing), it sends one full screenshot to the AI you picked: Gemini (`gemini-3.8-flash`, falling back to `gemini-3.6-flash`) or Claude (`claude-opus-5-5`).
+3. The AI answers the most useful thing on screen, or replies `NOTHING` when there is nothing worth saying. In that case the ball stays quiet.
 4. You can also type a question in the panel ("what's wrong with this code?"). That takes a fresh screenshot and asks right away.
 
 A minimum gap between calls (12 s by default) limits how often it sends screenshots, and how much it costs.
@@ -36,7 +38,7 @@ npm start
 
 - **Click** the ball to open the answer panel. **Drag** it anywhere. **Right-click** it for pause, ask now, or quit.
 - **Ctrl+Shift+Space** (Cmd+Shift+Space on a Mac) makes it look at the screen and answer right now.
-- On first run, open ⚙️ and paste your Anthropic API key. It's stored encrypted with your operating system's keychain. Alternatively, set `ANTHROPIC_API_KEY` before starting.
+- On first run, open ⚙️, pick **Google Gemini — free**, and paste your free Gemini key. Keys are stored encrypted with your operating system's keychain. Alternatively, set `GEMINI_API_KEY` (or `ANTHROPIC_API_KEY` for Claude) before starting.
 - On macOS, allow **Screen Recording** for the app the first time (System Settings → Privacy & Security).
 - It watches the screen the ball is on. Its own ball and panel are left out of the change detection.
 - To build an installer (`.exe` / `.dmg` / `.AppImage`), run `npm run dist` in the `desktop` folder. The output goes to `desktop/dist/`.
@@ -51,7 +53,7 @@ npm install
 npm run dev
 ```
 
-Tap the ball, paste your API key (it's saved only in that browser), then pick a source:
+Tap the ball, paste your free Gemini key (or a Claude key; it's saved only in that browser), then pick a source:
 
 | Source | Where it works | What it watches |
 |---|---|---|
@@ -69,15 +71,17 @@ On a phone, use **Add to Home Screen** to open it like an app.
 | Setting | Default | What it does |
 |---|---|---|
 | Look every | 4 s | How often it checks whether the screen changed. Checking is free, since nothing is sent |
-| Min gap | 12 s | Minimum time between two automatic Claude calls |
+| AI provider | Gemini (free) | Google Gemini on the free tier, or Anthropic Claude (paid) |
+| Min gap | 12 s | Minimum time between two automatic AI calls |
 | Thinking effort | Low | `low` is fastest; `high` is smartest but slower and uses more tokens |
 
-Requests use Claude's server-side refusal fallback (`fallbacks: "default"`). If a safety check declines a request, the API retries it on a suitable model within the same call.
+Claude requests use the server-side refusal fallback (`fallbacks: "default"`). If a safety check declines a request, the API retries it on a suitable model within the same call.
 
 ## Privacy and cost
 
-- Each automatic look sends **one screenshot of your screen** to the Anthropic API with your key. Pause with ⏸ (or right-click → Pause) before showing anything private.
-- No server of ours is involved. The desktop app talks to `api.anthropic.com` directly. The web app does the same from your browser, and the key stays in that browser's storage.
+- Each automatic look sends **one screenshot of your screen** to the AI you picked, with your key.
+- **Gemini free tier:** Google may use what you send to improve its products. Use a paid key (or Claude) for private work. Pause with ⏸ (or right-click → Pause) before showing anything private.
+- No server of ours is involved. The desktop app talks to Google's or Anthropic's API directly. The web app does the same from your browser, and the key stays in that browser's storage.
 - The ball is always visible while it's watching.
 
 ## Project layout
@@ -85,12 +89,14 @@ Requests use Claude's server-side refusal fallback (`fallbacks: "default"`). If 
 ```
 desktop/              Electron app (always-on-top ball over every app)
   src/main.js         window, screen capture, change detection, watch loop
+  src/ai.js           picks the provider
+  src/gemini.js       Gemini API call (@google/genai), free tier
   src/claude.js       Claude API call (@anthropic-ai/sdk)
   src/prompt.js       what F.R.E.E.D.O.M is told to do with a screenshot
   src/renderer/       the ball + answer panel UI
 web/                  Browser / phone version (Vite), deployed to GitHub Pages
   src/main.js         ball, panel, screen/camera/photo capture, pop-out
-  src/claude.js       same Claude call, from the browser
+  src/ai.js, gemini.js, claude.js   same calls, from the browser
 .github/workflows/    builds web/ and publishes it to GitHub Pages
 ```
 
